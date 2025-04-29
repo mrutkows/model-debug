@@ -1,0 +1,40 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python Debugger: granite-3.1-3b-a800m-instruct",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "args" : ["--model-path", "/Users/matt/Projects/huggingface/granite-3.1-3b-a800m-instruct"]
+        },
+        {
+            "name": "Python Debugger: filter: module class name",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "args" : ["--model-path", "/Users/matt/Projects/huggingface/granite-3.1-3b-a800m-instruct", "--module-class", "Linear"]
+        },
+        {
+            "name": "Python Debugger: filter: module name ",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "args" : ["--model-path", "/Users/matt/Projects/huggingface/granite-3.1-3b-a800m-instruct", "--module-name", "self_attn.q_proj", "self_attn.k_proj"]
+        },
+        {
+            "name": "Python Debugger: Current File; prompt arguments",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "args": "${command:pickArgs}"
+        }
+    ]
+}

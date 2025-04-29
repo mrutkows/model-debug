@@ -1,0 +1,13 @@
+# Filesystem
+.DS_Store
+
+# IDEs (e.g., VSCode)
+.vscode/*.log
+
+# built models
+/models
+*.gguf
+
+# Test output
+**/temp/
+**/tmp/
