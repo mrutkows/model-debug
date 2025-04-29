@@ -25,14 +25,11 @@ logger.add(sys.stderr, level="INFO")
 
 import torch, torch.nn
 
-# TODO: allow cmd. line config of print opts.
-torch.set_printoptions(threshold=1000, linewidth=200, edgeitems=3) # edgeitems=3, precision=4, sci_mode=False
-
-def print_torch_tensor(level:str, module_name:str, data, indent:int=2):
+def print_torch_tensor(fname:str, level:str, module_name:str, data, indent:int=2):
     for i, t in enumerate(data):
         if i==0:
             shape = t.shape
-            msg = f"\n>>> {module_name}, {shape}:"
+            msg = f"\n>>> ({fname}) {module_name}, {shape}:"
         msg += f"\n[{i}]:{t}"
     logger.log(level, f"{msg}")
     return
@@ -43,8 +40,7 @@ def print_torch_tensor(level:str, module_name:str, data, indent:int=2):
 # - Inspection of the input data and identify potential issues in the data or mode
 def forward_pre_hook_function(module, input):
     module_name = module.__class__.__name__
-    for i, tensor_input in enumerate(input):
-        logger.log("INPUT", f"\n>>> {module_name}, tensor:\n INPUT[{i}]: {tensor_input}")
+    print_torch_tensor(forward_pre_hook_function.__name__, "INPUT", module_name, input)
     return input
 
 # A forward hook is attached to a specific layer and its callback function
@@ -53,12 +49,15 @@ def forward_pre_hook_function(module, input):
 # - Visualizing the results of layer activations to gain insights into the module's behavior
 def forward_hook_function(module, input, output):
     module_name = module.__class__.__name__
-    print_torch_tensor("INPUT", module_name, input)
-    print_torch_tensor("OUTPUT", module_name, output)
+    print_torch_tensor(forward_hook_function.__name__, "INPUT", module_name, input)
+    print_torch_tensor(forward_hook_function.__name__, "OUTPUT", module_name, output)
     return output
 
 def filter_match(module_name:str, module: torch.nn.Module, filter_class_name, filter_model_name) -> bool:
     class_name = module.__class__.__name__
+    if not filter_model_name and not filter_class_name:
+        return True
+
     if module_name:
         for fname in filter_model_name:
             if fname in module_name:
@@ -76,6 +75,7 @@ if __name__ == "__main__":
         parser.add_argument('--module-name', type=str, nargs='+', required=False, help='Include only modules whose name includes the substring provided.')
         parser.add_argument('--verbose', default=True, action='store_true', help='Enable verbose output')
         parser.add_argument('--debug', default=False, action='store_false', help='Enable debug output')
+        parser.add_argument('--truncate-threshold', default=10, type=int, help='truncate tensor value printout if > threshold')
         args = parser.parse_args()
 
         if args.verbose:
@@ -99,6 +99,11 @@ if __name__ == "__main__":
         if args.module_name:
             logger.info(f"filtering modules with names containing: {args.module_name}")
 
+        # TODO: allow cmd. line config of print opts.
+        threshold = args.truncate_threshold
+        torch.set_printoptions(threshold=threshold, linewidth=200, edgeitems=3) # precision=4, sci_mode=False
+
+        # load the model
         model = AutoModelForCausalLM.from_pretrained(local_path)
 
         # return (str, Module) – Tuple of name and module
@@ -118,11 +123,11 @@ if __name__ == "__main__":
                 logger.warning(f"Skipping non-torch module[{idx}] type: ({module_type}), classname: `{class_name}`")
                 continue
 
+            # Only print the class hierarchy, if requested, once
             if idx == 0 and args.class_hierarchy:
                 logger.log("SUMMARY", f"Module class hierarchy:\n`{module}`")
 
             # Register hooks for each module
-            # logger.debug(f"testing module_name: {module_name} against filter: {args.module_name}")
             if filter_match(module_name, module, args.module_class, args.module_name):
                 if args.pre_forward_hook:
                     logger.info(f">> registering forward pre-hook for module_name: {module_name}...")
@@ -136,8 +141,8 @@ if __name__ == "__main__":
 
         with torch.no_grad():
             outputs = model.generate(**inputs)
-        gen = tokenizer.decode(outputs[0], skip_special_tokens=True)
-        print(f">> {gen}")
+        decoded_output = tokenizer.decode(outputs[0], skip_special_tokens=True)
+        print(f">> {decoded_output}")
 
     except SystemExit as se:
         print(f"Usage: {parser.format_usage()}")
