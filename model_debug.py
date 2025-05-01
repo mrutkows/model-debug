@@ -112,8 +112,8 @@ if __name__ == "__main__":
     try:
         parser = argparse.ArgumentParser(description=__doc__, exit_on_error=False)
         parser.add_argument('-m', '--model-path', type=pathlib.Path, required=True, help='path to local HF model repo.')
-        # TODO: default to false?
-        parser.add_argument('--pre-forward-hook', default=False, action='store_true', help='Enable pre-forward hook on modules.')
+        parser.add_argument('-p', '--prompt', type=pathlib.Path, required=True, help='path to local HF model repo.')
+        parser.add_argument('--hook-pre-forward', default=False, action='store_true', help='Enable pre-forward hook on modules.')
         parser.add_argument('--class-hierarchy', default=True, action='store_true', help='Show module class hierarchy')
         parser.add_argument('--filter-class', type=str, nargs='+', required=False, help='Include only modules whose class name includes the substrings provided.')
         parser.add_argument('--filter-name', type=str, nargs='+', required=False, help='Include only modules whose name includes the substrings provided.')
@@ -179,7 +179,7 @@ if __name__ == "__main__":
 
             # Register requested hooks for each module
             if filter_match(module_name, module, args.filter_class, args.filter_name):
-                if args.pre_forward_hook:
+                if args.hook_pre_forward:
                     logger.info(f">> registering forward pre-hook: {module_name}...")
                     module.register_forward_pre_hook(create_forward_pre_hook_with_name(module_name))
                 logger.info(f">> registering forward hook: {module_name}:{str(module)}...")
