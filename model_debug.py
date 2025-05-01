@@ -87,7 +87,7 @@ def create_forward_hook_with_name(module_name):
     # A forward hook is attached to a specific layer and its callback function
     # is triggered immediately AFTER the layer's forward() method is executed.
     # Enables:
-    # - Visualizing the results of layer activations to gain insights into the module's behavio
+    # - Visualizing the results of layer activations to gain insights into the module's behavior
     def forward_hook(module, input, output): # , module_name
         module_class_name = module.__class__.__name__
         logger.log("HIGHLIGHT", f"{module_name}: {str(module)}")
@@ -181,7 +181,7 @@ if __name__ == "__main__":
             if filter_match(module_name, module, args.filter_class, args.filter_name):
                 if args.pre_forward_hook:
                     logger.info(f">> registering forward pre-hook: {module_name}...")
-                    module.register_forward_pre_hook(create_forward_pre_hook_with_name(module_name=))
+                    module.register_forward_pre_hook(create_forward_pre_hook_with_name(module_name))
                 logger.info(f">> registering forward hook: {module_name}:{str(module)}...")
                 module.register_forward_hook(create_forward_hook_with_name(module_name))
 
