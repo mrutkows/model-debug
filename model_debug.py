@@ -91,6 +91,18 @@ def forward_hook(module, input, output): # , module_name
     print_torch_tensors(f"forward", "OUTPUT", "?", module_class_name, output)
     return output
 
+def create_forward_hook_with_name(module_name):
+    # def my_lambda(event, context):
+    #     print(f"Lambda {module_name} called with event: {event}")
+    def forward_hook(module, input, output): # , module_name
+        module_class_name = module.__class__.__name__
+        logger.log("HIGHLIGHT", f"{module_name}: {str(module)}")
+        print_module_parameters(filter=["weight"])
+        print_torch_tensors(f"forward", "INPUT", module_name, module_class_name, input)
+        print_torch_tensors(f"forward", "OUTPUT", module_name, module_class_name, output)
+        return output
+    return forward_hook
+
 def filter_match(module_name:str, module: torch.nn.Module, filter_class_name, filter_model_name) -> bool:
     class_name = module.__class__.__name__ # TODO
     if not filter_model_name and not filter_class_name:
@@ -141,10 +153,10 @@ if __name__ == "__main__":
 
         # Register "hooks" matching the following filters:
         if args.filter_class:
-            logger.info(f"Registering hooks for modules whose class name contains: {args.filter_class}")
+            logger.info(f"Registering hooks: for module_classes: {args.filter_class}")
 
         if args.filter_name:
-            logger.info(f"Registering hooks for modules whose names contains: {args.filter_name}")
+            logger.info(f"Registering hooks for module_names: {args.filter_name}")
 
         # Note: the only means to obtain the module's "tensor" name (not class name)
         # is using the following method:
@@ -177,8 +189,9 @@ if __name__ == "__main__":
                     logger.info(f">> registering forward pre-hook: {module_name}...")
                     module.register_forward_pre_hook(forward_pre_hook)
                 logger.info(f">> registering forward hook: {module_name}:{str(module)}...")
-                module.register_forward_hook(forward_hook)
+                #module.register_forward_hook(forward_hook)
                 #module.register_forward_hook(lambda m, i, o:forward_hook_function(m, i, o, module_name))
+                module.register_forward_hook(create_forward_hook_with_name(module_name))
 
         tokenizer = AutoTokenizer.from_pretrained(local_path)
         prompt = "What color is the sky?"  # TODO: provide cmd. line flag to (optionally) provide
