@@ -37,7 +37,7 @@ def getShape(t) -> Tuple[bool, str]:
     return (True, str(t.shape)) if isinstance(t, torch.Tensor) else (False, "NONE")
 
 # Note: all parameters are tensors (i.e., have tensor "data")
-# see:
+# see: https://pytorch.org/docs/stable/tensors.html#torch.Tensor
 def format_module_parameters(filter:List[str]=None, indent=2) -> str:
     info = ""
     for name, param in module.named_parameters():
@@ -70,30 +70,24 @@ def print_torch_tensors(hook_name:str, level:str, module_name:str, module_class_
         logger.warning(f"\n[{level}] {module_name} ({hook_name}): No tensor data found.")
     return
 
-# A pre-forward hook is attached to a specific layer, and its callback function
-# is triggered BEFORE the forward() method of the layer is executed.
-# Enables:
-# - Inspection of the input data and identify potential issues in the data or mode
-def forward_pre_hook(module, input):
-    module_class_name = module.__class__.__name__
-    print_torch_tensors("pre_forward", "INPUT", "?", module_class_name, input)
-    return input
+# Generate our hook function (lambda) and use param. capture to save layer-specific info.
+def create_forward_pre_hook_with_name(module_name):
+    # A pre-forward hook is attached to a specific layer, and its callback function
+    # is triggered BEFORE the forward() method of the layer is executed.
+    # Enables:
+    # - Inspection of the input data and identify potential issues in the data or module.
+    def forward_pre_hook(module, input):
+        module_class_name = module.__class__.__name__
+        print_torch_tensors("pre_forward", "INPUT", module_name, module_class_name, input)
+        return input
+    return forward_pre_hook
 
-# A forward hook is attached to a specific layer and its callback function
-# is triggered immediately AFTER the layer's forward() method is executed.
-# Enables:
-# - Visualizing the results of layer activations to gain insights into the module's behavior
-def forward_hook(module, input, output): # , module_name
-    module_class_name = module.__class__.__name__
-    logger.log("HIGHLIGHT", f"{module_name}: {str(module)}")
-    print_module_parameters(filter=["weight"])
-    print_torch_tensors(f"forward", "INPUT", "?", module_class_name, input)
-    print_torch_tensors(f"forward", "OUTPUT", "?", module_class_name, output)
-    return output
-
+# Generate our hook function (lambda) and use param. capture to save layer-specific info.
 def create_forward_hook_with_name(module_name):
-    # def my_lambda(event, context):
-    #     print(f"Lambda {module_name} called with event: {event}")
+    # A forward hook is attached to a specific layer and its callback function
+    # is triggered immediately AFTER the layer's forward() method is executed.
+    # Enables:
+    # - Visualizing the results of layer activations to gain insights into the module's behavio
     def forward_hook(module, input, output): # , module_name
         module_class_name = module.__class__.__name__
         logger.log("HIGHLIGHT", f"{module_name}: {str(module)}")
@@ -153,7 +147,7 @@ if __name__ == "__main__":
 
         # Register "hooks" matching the following filters:
         if args.filter_class:
-            logger.info(f"Registering hooks: for module_classes: {args.filter_class}")
+            logger.info(f"Registering hooks: for module_class: {args.filter_class}")
 
         if args.filter_name:
             logger.info(f"Registering hooks for module_names: {args.filter_name}")
@@ -183,14 +177,12 @@ if __name__ == "__main__":
             if idx == 0 and args.class_hierarchy:
                 logger.log("SUMMARY", f"Module class hierarchy:\n{module}")
 
-            # Register hooks for each module
+            # Register requested hooks for each module
             if filter_match(module_name, module, args.filter_class, args.filter_name):
                 if args.pre_forward_hook:
                     logger.info(f">> registering forward pre-hook: {module_name}...")
-                    module.register_forward_pre_hook(forward_pre_hook)
+                    module.register_forward_pre_hook(create_forward_pre_hook_with_name(module_name=))
                 logger.info(f">> registering forward hook: {module_name}:{str(module)}...")
-                #module.register_forward_hook(forward_hook)
-                #module.register_forward_hook(lambda m, i, o:forward_hook_function(m, i, o, module_name))
                 module.register_forward_hook(create_forward_hook_with_name(module_name))
 
         tokenizer = AutoTokenizer.from_pretrained(local_path)
