@@ -24,11 +24,20 @@ logger.level(LOG_LEVEL_HIGHLIGHT, no=31, color="<fg #00FF00>") # Green
 logger.remove()
 logger.add(sys.stderr, level="INFO")
 
+DEFAULT_USER_PROMPT = "What color is the sky?"
+
 #tree_branch = '\u2514' # ╚
 # def print_mro_tree(cls, indent=0, branch_char=""):
 #     logger.log("SUMMARY", f"{' ' * indent} + inset + {cls.__name__}")
 #     for base in cls.__bases__:
 #         print_mro_tree(base, indent + 1, branch_char=tree_branch)
+
+# import keyboard
+# def pause_for_key():
+#     while True:
+#         event = keyboard.read_event(suppress=True)
+#         if event.event_type == keyboard.KEY_DOWN:
+#             return event.name
 
 def get_public_methods(cls):
   return [method for method, _ in inspect.getmembers(cls, predicate=inspect.isfunction) if not method.startswith('_')]
@@ -73,9 +82,7 @@ def print_torch_tensors(hook_name:str, level:str, module_name:str, module_class_
 # Generate our hook function (lambda) and use param. capture to save layer-specific info.
 def create_forward_pre_hook_with_name(module_name):
     # A pre-forward hook is attached to a specific layer, and its callback function
-    # is triggered BEFORE the forward() method of the layer is executed.
-    # Enables:
-    # - Inspection of the input data and identify potential issues in the data or module.
+    # is triggered BEFORE the layer's forward() method is executed.
     def forward_pre_hook(module, input):
         module_class_name = module.__class__.__name__
         print_torch_tensors("pre_forward", "INPUT", module_name, module_class_name, input)
@@ -86,8 +93,6 @@ def create_forward_pre_hook_with_name(module_name):
 def create_forward_hook_with_name(module_name):
     # A forward hook is attached to a specific layer and its callback function
     # is triggered immediately AFTER the layer's forward() method is executed.
-    # Enables:
-    # - Visualizing the results of layer activations to gain insights into the module's behavior
     def forward_hook(module, input, output): # , module_name
         module_class_name = module.__class__.__name__
         logger.log("HIGHLIGHT", f"{module_name}: {str(module)}")
@@ -112,7 +117,7 @@ if __name__ == "__main__":
     try:
         parser = argparse.ArgumentParser(description=__doc__, exit_on_error=False)
         parser.add_argument('-m', '--model-path', type=pathlib.Path, required=True, help='path to local HF model repo.')
-        parser.add_argument('-p', '--prompt', type=pathlib.Path, required=True, help='path to local HF model repo.')
+        parser.add_argument('-p', '--prompt', required=False, default=DEFAULT_USER_PROMPT, help='Optional prompt text on model.generate()')
         parser.add_argument('--hook-pre-forward', default=False, action='store_true', help='Enable pre-forward hook on modules.')
         parser.add_argument('--class-hierarchy', default=True, action='store_true', help='Show module class hierarchy')
         parser.add_argument('--filter-class', type=str, nargs='+', required=False, help='Include only modules whose class name includes the substrings provided.')
