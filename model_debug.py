@@ -190,8 +190,9 @@ if __name__ == "__main__":
                 logger.info(f">> registering forward hook: {module_name}:{str(module)}...")
                 module.register_forward_hook(create_forward_hook_with_name(module_name))
 
+        # tokenize the user input prompt
         tokenizer = AutoTokenizer.from_pretrained(local_path)
-        prompt = "What color is the sky?"  # TODO: provide cmd. line flag to (optionally) provide
+        prompt = args.prompt
         logger.info(f"tokenizer(): \"{prompt}\"")
         inputs = tokenizer(prompt, return_tensors="pt")
 
