@@ -28,7 +28,7 @@ DEFAULT_USER_PROMPT = "What color is the sky?"
 
 #tree_branch = '\u2514' # ╚
 # def print_mro_tree(cls, indent=0, branch_char=""):
-#     logger.log("SUMMARY", f"{' ' * indent} + inset + {cls.__name__}")
+#     logger.log(LOG_LEVEL_SUMMARY, f"{' ' * indent} + inset + {cls.__name__}")
 #     for base in cls.__bases__:
 #         print_mro_tree(base, indent + 1, branch_char=tree_branch)
 
@@ -85,7 +85,7 @@ def create_forward_pre_hook_with_name(module_name):
     # is triggered BEFORE the layer's forward() method is executed.
     def forward_pre_hook(module, input):
         module_class_name = module.__class__.__name__
-        print_torch_tensors("pre_forward", "INPUT", module_name, module_class_name, input)
+        print_torch_tensors("pre_forward", LOG_LEVEL_INPUT, module_name, module_class_name, input)
         return input
     return forward_pre_hook
 
@@ -95,15 +95,15 @@ def create_forward_hook_with_name(module_name):
     # is triggered immediately AFTER the layer's forward() method is executed.
     def forward_hook(module, input, output): # , module_name
         module_class_name = module.__class__.__name__
-        logger.log("HIGHLIGHT", f"{module_name}: {str(module)}")
+        logger.log(LOG_LEVEL_HIGHLIGHT, f"{module_name}: {str(module)}")
         print_module_parameters(filter=["weight"])
-        print_torch_tensors(f"forward", "INPUT", module_name, module_class_name, input)
-        print_torch_tensors(f"forward", "OUTPUT", module_name, module_class_name, output)
+        print_torch_tensors(f"forward", LOG_LEVEL_INPUT, module_name, module_class_name, input)
+        print_torch_tensors(f"forward", LOG_LEVEL_OUTPUT, module_name, module_class_name, output)
         return output
     return forward_hook
 
-def filter_match(module_name:str, module: torch.nn.Module, filter_class_name, filter_model_name) -> bool:
-    class_name = module.__class__.__name__ # TODO
+def filter_match(module_name:str, class_name:str, filter_class_name, filter_model_name) -> bool:
+    # If no filter provided, all modules are a "match"
     if not filter_model_name and not filter_class_name:
         return True
 
@@ -180,10 +180,10 @@ if __name__ == "__main__":
 
             # Only print the class hierarchy (once) using the top-level model, if requested
             if idx == 0 and args.class_hierarchy:
-                logger.log("SUMMARY", f"Module class hierarchy:\n{module}")
+                logger.log(LOG_LEVEL_SUMMARY, f"Module class hierarchy:\n{module}")
 
             # Register requested hooks for each module
-            if filter_match(module_name, module, args.filter_class, args.filter_name):
+            if filter_match(module_name, class_name, args.filter_class, args.filter_name):
                 if args.hook_pre_forward:
                     logger.info(f">> registering forward pre-hook: {module_name}...")
                     module.register_forward_pre_hook(create_forward_pre_hook_with_name(module_name))
