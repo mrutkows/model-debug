@@ -39,8 +39,18 @@ DEFAULT_USER_PROMPT = "What color is the sky?"
 #         if event.event_type == keyboard.KEY_DOWN:
 #             return event.name
 
-def get_public_methods(cls):
-  return [method for method, _ in inspect.getmembers(cls, predicate=inspect.isfunction) if not method.startswith('_')]
+class DebugFlags:
+    def __init__(self, debug:bool, trace:bool, pause:bool):
+        self.pause = pause
+        self.debug = debug
+        self.trace = trace
+    def __str__(self):
+        return f"DebugFlags(pause={self.pause}, debug={self.debug}, trace={self.trace})"
+
+def pause_until_key_pressed():
+    user_input = input(f"Press <Enter> to continue...")
+    if user_input != "":
+        logger.trace(f"User pressed '{user_input}'")
 
 def getShape(t) -> Tuple[bool, str]:
     return (True, str(t.shape)) if isinstance(t, torch.Tensor) else (False, "NONE")
@@ -80,7 +90,7 @@ def print_torch_tensors(hook_name:str, level:str, module_name:str, module_class_
     return
 
 # Generate our hook function (lambda) and use param. capture to save layer-specific info.
-def create_forward_pre_hook_with_name(module_name):
+def create_forward_pre_hook_with_name(module_name, flags:DebugFlags):
     # A pre-forward hook is attached to a specific layer, and its callback function
     # is triggered BEFORE the layer's forward() method is executed.
     def forward_pre_hook(module, input):
@@ -90,16 +100,19 @@ def create_forward_pre_hook_with_name(module_name):
     return forward_pre_hook
 
 # Generate our hook function (lambda) and use param. capture to save layer-specific info.
-def create_forward_hook_with_name(module_name):
+def create_forward_hook_with_name(module_name, flags:DebugFlags):
     # A forward hook is attached to a specific layer and its callback function
     # is triggered immediately AFTER the layer's forward() method is executed.
     def forward_hook(module, input, output): # , module_name
         module_class_name = module.__class__.__name__
         logger.log(LOG_LEVEL_HIGHLIGHT, f"{module_name}: {str(module)}")
+        logger.debug(f"flags={flags}")
         print_module_parameters(filter=["weight"])
         print_torch_tensors(f"forward", LOG_LEVEL_INPUT, module_name, module_class_name, input)
         print_torch_tensors(f"forward", LOG_LEVEL_OUTPUT, module_name, module_class_name, output)
-        return output
+        if flags.pause:
+            pause_until_key_pressed()
+
     return forward_hook
 
 def filter_match(module_name:str, class_name:str, filter_class_name, filter_model_name) -> bool:
@@ -125,6 +138,7 @@ if __name__ == "__main__":
         parser.add_argument('--verbose', default=True, action='store_true', help='Enable verbose output')
         parser.add_argument('--debug', default=False, action='store_true', help='Enable debug output')
         parser.add_argument('--trace', default=False, action='store_true', help='Enable trace output')
+        parser.add_argument('--pause', default=False, action='store_true', help='Pause between forward hooks')
         parser.add_argument('--truncate-threshold', default=10, type=int, help='truncate tensor value printout if > threshold')
         args = parser.parse_args()
 
@@ -135,6 +149,10 @@ if __name__ == "__main__":
         if args.debug:
             logger.remove()
             logger.add(sys.stderr, level="DEBUG")
+
+        # store flags for use in hook callbacks
+        flags:DebugFlags = DebugFlags(args.debug, args.trace, args.pause)
+        logger.trace(f"flags: {flags}")
 
         local_path = str(args.model_path)
         if not args.model_path.exists():
@@ -186,9 +204,9 @@ if __name__ == "__main__":
             if filter_match(module_name, class_name, args.filter_class, args.filter_name):
                 if args.hook_pre_forward:
                     logger.info(f">> registering forward pre-hook: {module_name}...")
-                    module.register_forward_pre_hook(create_forward_pre_hook_with_name(module_name))
+                    module.register_forward_pre_hook(create_forward_pre_hook_with_name(module_name, flags))
                 logger.info(f">> registering forward hook: {module_name}:{str(module)}...")
-                module.register_forward_hook(create_forward_hook_with_name(module_name))
+                module.register_forward_hook(create_forward_hook_with_name(module_name, flags))
 
         # tokenize the user input prompt
         tokenizer = AutoTokenizer.from_pretrained(local_path)

@@ -21,15 +21,23 @@
             "args" : ["--model-path", "/Users/matt/Projects/huggingface/granite-3.1-3b-a800m-instruct", "--filter-name", "self_attn.q_proj", "self_attn.k_proj", "--debug"]
         },
         {
-            "name": "filter: module name (layer 0), debug=True ",
+            "name": "filter: module name (layers.0.self_attn.k_proj), debug=True ",
             "type": "debugpy",
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",
-            "args" : ["--model-path", "/Users/matt/Projects/huggingface/granite-3.1-3b-a800m-instruct", "--filter-name", "layers.0.self_attn.k_proj", "--debug"]
+            "args" : ["--model-path", "/Users/matt/Projects/huggingface/granite-3.1-3b-a800m-instruct", "--filter-name", "layers.0.self_attn.k_proj", "--debug", "--pause"]
         },
         {
-            "name": "filter: module name, debug=False ",
+            "name": "filter: module name (k_proj), debug=False ",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "args" : ["--model-path", "/Users/matt/Projects/huggingface/granite-3.1-3b-a800m-instruct", "--filter-name", "self_attn.k_proj"]
+        },
+        {
+            "name": "filter: module name (q_proj, k_proj), debug=False ",
             "type": "debugpy",
             "request": "launch",
             "program": "${file}",
