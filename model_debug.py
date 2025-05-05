@@ -103,7 +103,7 @@ def create_forward_hook_with_name(module_name):
     return forward_hook
 
 def filter_match(module_name:str, class_name:str, filter_class_name, filter_model_name) -> bool:
-    # If no filter provided, all modules are a "match"
+    # If no filter provided, no modules are a "match"
     if not filter_model_name and not filter_class_name:
         return True
 
@@ -199,7 +199,7 @@ if __name__ == "__main__":
         with torch.no_grad():
             logger.info(f"calling model.generate():\n  inputs.input_ids: {inputs.input_ids}")
             outputs = model.generate(**inputs)
-        logger.info(f"calling tokenizer.decode():\n  outputs[0]: {outputs[0]}")
+        logger.info(f"calling tokenizer.decode():\n  outputs[0] ({len(outputs)}): {outputs[0]}")
         decoded_output = tokenizer.decode(outputs[0], skip_special_tokens=True)
         print(f">> {decoded_output}")
 

@@ -37,12 +37,28 @@
             "args" : ["--model-path", "/Users/matt/Projects/huggingface/granite-3.1-3b-a800m-instruct", "--filter-name", "self_attn.q_proj", "self_attn.k_proj"]
         },
         {
+            "name": "filter: 4.0 tiny",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "args" : ["--model-path", "/Users/matt/Projects/huggingface/granite-4.0-tiny-preview", "--filter-name", "self_attn.q_proj"]
+        },
+        {
             "name": "Python Debugger: filter: module class name",
             "type": "debugpy",
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",
             "args" : ["--model-path", "/Users/matt/Projects/huggingface/granite-3.1-3b-a800m-instruct", "--filter-class", "Linear"]
+        },
+        {
+            "name": "Python Debugger: prompt test",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "args" : ["--model-path", "/Users/matt/Projects/huggingface/granite-3.1-3b-a800m-instruct", "--prompt", "Write an executable hello world application using Golang.", "--filter-name", "self_attn.q_proj"]
         },
         {
             "name": "Python Debugger: Current File; prompt arguments",
