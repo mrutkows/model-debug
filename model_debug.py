@@ -96,7 +96,10 @@ def create_forward_pre_hook_with_name(module_name, flags:DebugFlags):
     def forward_pre_hook(module, input):
         module_class_name = module.__class__.__name__
         print_torch_tensors("pre_forward", LOG_LEVEL_INPUT, module_name, module_class_name, input)
+        if flags.pause:
+            pause_until_key_pressed()
         return input
+
     return forward_pre_hook
 
 # Generate our hook function (lambda) and use param. capture to save layer-specific info.
