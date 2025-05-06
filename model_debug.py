@@ -14,7 +14,7 @@ LOG_LEVEL_OUTPUT = "OUTPUT"
 LOG_LEVEL_PARAMS = "PARAMS"
 LOG_LEVEL_HIGHLIGHT = "HIGHLIGHT"
 
-# Colors: https://htmlcolorcodes.com/color-names/
+# Colors: https://htmlcolorcodes.com/
 # NOTE: Existing Loguru log levels: INFO=25, WARNING=30
 logger.level(LOG_LEVEL_SUMMARY, no=26, color="<fg #FFD700>")   # Gold
 logger.level(LOG_LEVEL_INPUT, no=27, color="<fg #87CEFA>")     # LightSkyBlue
@@ -25,12 +25,6 @@ logger.remove()
 logger.add(sys.stderr, level="INFO")
 
 DEFAULT_USER_PROMPT = "What color is the sky?"
-
-#tree_branch = '\u2514' # ╚
-# def print_mro_tree(cls, indent=0, branch_char=""):
-#     logger.log(LOG_LEVEL_SUMMARY, f"{' ' * indent} + inset + {cls.__name__}")
-#     for base in cls.__bases__:
-#         print_mro_tree(base, indent + 1, branch_char=tree_branch)
 
 # import keyboard
 # def pause_for_key():
@@ -51,6 +45,12 @@ def pause_until_key_pressed():
     user_input = input(f"Press <Enter> to continue...")
     if user_input != "":
         logger.trace(f"User pressed '{user_input}'")
+
+# def format_module_hierarchy(name:str, module:torch.nn.Module, indent=0) -> str:
+#     output = f"\n{'  ' * indent}({name}) {module.__class__.__name__}"
+#     for name, child in module.named_children():
+#         output += print_module_hierarchy(name, child, indent + 1)
+#     return output
 
 def getShape(t) -> Tuple[bool, str]:
     return (True, str(t.shape)) if isinstance(t, torch.Tensor) else (False, "NONE")
@@ -135,7 +135,7 @@ if __name__ == "__main__":
         parser.add_argument('-m', '--model-path', type=pathlib.Path, required=True, help='path to local HF model repo.')
         parser.add_argument('-p', '--prompt', required=False, default=DEFAULT_USER_PROMPT, help='Optional prompt text on model.generate()')
         parser.add_argument('--hook-pre-forward', default=False, action='store_true', help='Enable pre-forward hook on modules.')
-        parser.add_argument('--class-hierarchy', default=True, action='store_true', help='Show module class hierarchy')
+        parser.add_argument('--module-hierarchy', default=True, action='store_true', help='Show module class hierarchy')
         parser.add_argument('--filter-class', type=str, nargs='+', required=False, help='Include only modules whose class name includes the substrings provided.')
         parser.add_argument('--filter-name', type=str, nargs='+', required=False, help='Include only modules whose name includes the substrings provided.')
         parser.add_argument('--verbose', default=True, action='store_true', help='Enable verbose output')
@@ -178,6 +178,10 @@ if __name__ == "__main__":
         if args.filter_name:
             logger.info(f"Registering hooks for module_names: {args.filter_name}")
 
+        # Only print the class hierarchy (once) using the top-level model, if requested
+        if args.module_hierarchy:
+            logger.log(LOG_LEVEL_SUMMARY, f"Module hierarchy (<name>) <class> :\n{str(model)}")
+
         # Note: the only means to obtain the module's "tensor" name (not class name)
         # is using the following method:
         named_modules = model.named_modules()  # return (str, Module) – Tuple of module name and module
@@ -198,10 +202,6 @@ if __name__ == "__main__":
             if not isTorchModule:
                 logger.warning(f"Skipping non-torch module[{idx}] type: ({module_type}), classname: `{class_name}`")
                 continue
-
-            # Only print the class hierarchy (once) using the top-level model, if requested
-            if idx == 0 and args.class_hierarchy:
-                logger.log(LOG_LEVEL_SUMMARY, f"Module class hierarchy:\n{module}")
 
             # Register requested hooks for each module
             if filter_match(module_name, class_name, args.filter_class, args.filter_name):
