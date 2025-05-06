@@ -41,7 +41,7 @@ def pause_until_key_pressed():
 
 # Note: this would be the method we would expand to format our own module hierarchy with:
 # def format_module_hierarchy(name:str, module:torch.nn.Module, indent=0) -> str:
-#     output = f"\n{'  ' * indent}({name}) {module.__class__.__name__}"
+#     output = f"\n{'  ' * indent}({name}) {module.__class__.__name__} ({{model.extra_repr()})"
 #     for name, child in module.named_children():
 #         output += print_module_hierarchy(name, child, indent + 1)
 #     return output
