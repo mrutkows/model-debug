@@ -26,13 +26,6 @@ logger.add(sys.stderr, level="INFO")
 
 DEFAULT_USER_PROMPT = "What color is the sky?"
 
-# import keyboard
-# def pause_for_key():
-#     while True:
-#         event = keyboard.read_event(suppress=True)
-#         if event.event_type == keyboard.KEY_DOWN:
-#             return event.name
-
 class DebugFlags:
     def __init__(self, debug:bool, trace:bool, pause:bool):
         self.pause = pause
@@ -46,6 +39,7 @@ def pause_until_key_pressed():
     if user_input != "":
         logger.trace(f"User pressed '{user_input}'")
 
+# Note: this would be the method we would expand to format our own module hierarchy with:
 # def format_module_hierarchy(name:str, module:torch.nn.Module, indent=0) -> str:
 #     output = f"\n{'  ' * indent}({name}) {module.__class__.__name__}"
 #     for name, child in module.named_children():
@@ -54,6 +48,10 @@ def pause_until_key_pressed():
 
 def getShape(t) -> Tuple[bool, str]:
     return (True, str(t.shape)) if isinstance(t, torch.Tensor) else (False, "NONE")
+
+def format_bytes_to_gb(byte_count):
+    gb_size = byte_count / (1024 ** 3)
+    return f"{gb_size:.2f} GB"
 
 # Note: all parameters are tensors (i.e., have tensor "data")
 # see: https://pytorch.org/docs/stable/tensors.html#torch.Tensor
@@ -177,6 +175,10 @@ if __name__ == "__main__":
 
         if args.filter_name:
             logger.info(f"Registering hooks for module_names: {args.filter_name}")
+
+        # Useful model information
+        mem_size = model.get_memory_footprint()
+        logger.log(LOG_LEVEL_SUMMARY, f"Model memory footprint: {format_bytes_to_gb(mem_size)}")
 
         # Only print the class hierarchy (once) using the top-level model, if requested
         if args.module_hierarchy:
