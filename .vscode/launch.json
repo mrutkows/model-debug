@@ -45,7 +45,15 @@
             "args" : ["--model-path", "/Users/matt/Projects/huggingface/granite-3.1-3b-a800m-instruct", "--filter-name", "self_attn.q_proj", "self_attn.k_proj"]
         },
         {
-            "name": "filter: 4.0 tiny",
+            "name": "filter: 4.0 30B (SharedMoE)",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "args" : ["--model-path", "/Users/matt/Projects/dmf_models/granite-4.0-30b-a6b-base-preview-4k/r250317a", "--filter-name", "self_attn.q_proj"]
+        },
+        {
+            "name": "filter: 4.0 tiny (SharedMoEHybrid)",
             "type": "debugpy",
             "request": "launch",
             "program": "${file}",
@@ -67,6 +75,14 @@
             "program": "${file}",
             "console": "integratedTerminal",
             "args" : ["--model-path", "/Users/matt/Projects/huggingface/granite-3.1-3b-a800m-instruct", "--prompt", "Write an executable hello world application using Golang.", "--filter-name", "self_attn.q_proj"]
+        },
+        {
+            "name": "Python Debugger: config test",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "args" : ["--config-path", "/Users/matt/Projects/huggingface/granite-3.1-3b-a800m-instruct", "--prompt", "Write an executable hello world application using Golang.", "--filter-name", "self_attn.q_proj"]
         },
         {
             "name": "Python Debugger: Current File; prompt arguments",

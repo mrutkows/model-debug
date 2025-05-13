@@ -5,7 +5,7 @@ import argparse
 import pathlib
 from loguru import logger
 import torch, torch.nn
-from transformers import AutoTokenizer, AutoModelForCausalLM, PreTrainedModel
+from transformers import AutoTokenizer, AutoConfig, AutoModel, AutoModelForCausalLM, PreTrainedModel
 from transformers.modeling_utils import ModuleUtilsMixin
 
 LOG_LEVEL_SUMMARY = "SUMMARY"
@@ -40,11 +40,11 @@ def pause_until_key_pressed():
         logger.trace(f"User pressed '{user_input}'")
 
 # Note: this would be the method we would expand to format our own module hierarchy with:
-# def format_module_hierarchy(name:str, module:torch.nn.Module, indent=0) -> str:
-#     output = f"\n{'  ' * indent}({name}) {module.__class__.__name__} ({{model.extra_repr()})"
-#     for name, child in module.named_children():
-#         output += print_module_hierarchy(name, child, indent + 1)
-#     return output
+def format_module_hierarchy(name:str, module:torch.nn.Module, indent=0) -> str:
+    output = f"\n{'  ' * indent}({name}) {module.__class__.__name__} ({model.extra_repr()})"
+    for name, child in module.named_children():
+        output += format_module_hierarchy(name, child, indent + 1)
+    return output
 
 def getShape(t) -> Tuple[bool, str]:
     return (True, str(t.shape)) if isinstance(t, torch.Tensor) else (False, "NONE")
@@ -130,7 +130,9 @@ def filter_match(module_name:str, class_name:str, filter_class_name, filter_mode
 if __name__ == "__main__":
     try:
         parser = argparse.ArgumentParser(description=__doc__, exit_on_error=False)
-        parser.add_argument('-m', '--model-path', type=pathlib.Path, required=True, help='path to local HF model repo.')
+        group = parser.add_mutually_exclusive_group(required=True)
+        group.add_argument('-m', '--model-path', type=pathlib.Path, help='path to local HF model repo.')
+        group.add_argument('-c', '--config-path', type=pathlib.Path, help='path to local HF model config file (initializes model with no pretrained data).')
         parser.add_argument('-p', '--prompt', required=False, default=DEFAULT_USER_PROMPT, help='Optional prompt text on model.generate()')
         parser.add_argument('--hook-pre-forward', default=False, action='store_true', help='Enable pre-forward hook on modules.')
         parser.add_argument('--module-hierarchy', default=True, action='store_true', help='Show module class hierarchy')
@@ -151,23 +153,39 @@ if __name__ == "__main__":
             logger.remove()
             logger.add(sys.stderr, level="DEBUG")
 
+        # allow cmd. line config of print opts.
+        threshold = args.truncate_threshold
+        torch.set_printoptions(threshold=threshold, linewidth=200, edgeitems=3) # TODO: others: precision=4, sci_mode=False
+
         # store flags for use in hook callbacks
         flags:DebugFlags = DebugFlags(args.debug, args.trace, args.pause)
         logger.trace(f"flags: {flags}")
 
-        local_path = str(args.model_path)
-        if not args.model_path.exists():
-            raise ValueError(f"--model-path {local_path} does not exist")
+        if args.model_path:
+            local_path = str(args.model_path)
+            if not args.model_path.exists():
+                raise ValueError(f"--model-path {local_path} does not exist")
+            if not args.model_path.is_dir():
+                raise ValueError(f"--model-path {local_path} is not a model repo. (directory)")
 
-        if not args.model_path.is_dir():
-            raise ValueError(f"--model-path {local_path} is not a model repo. (directory)")
+            # load the model
+            model = AutoModelForCausalLM.from_pretrained(local_path, low_cpu_mem_usage=True)
+        elif args.config_path:
+            local_path = str(args.config_path)
+            if not args.config_path.exists():
+                raise ValueError(f"--config-path {local_path} does not exist")
+            if not args.config_path.is_dir():
+                raise ValueError(f"--config-path {local_path} is not a model repo. (directory)")
 
-        # TODO: allow cmd. line config of print opts.
-        threshold = args.truncate_threshold
-        torch.set_printoptions(threshold=threshold, linewidth=200, edgeitems=3) # others: precision=4, sci_mode=False
-
-        # load the model
-        model = AutoModelForCausalLM.from_pretrained(local_path)
+            config =  AutoConfig.from_pretrained(args.config_path, local_files_only=True)
+            architectures = config.architectures
+            if len(architectures) > 0:
+                model_class_name = architectures[0]
+                print(f"Using architectures: {architectures}: {model_class_name}")
+                # model_class = get_class_from_module(model_class_name)
+                model = AutoModelForCausalLM.from_config(config)
+                model._init_weights(config)
+                print(f"model: {model}")
 
         # Register "hooks" matching the following filters:
         if args.filter_class:
@@ -183,6 +201,8 @@ if __name__ == "__main__":
         # Only print the class hierarchy (once) using the top-level model, if requested
         if args.module_hierarchy:
             logger.log(LOG_LEVEL_SUMMARY, f"Module hierarchy (<name>) <class> :\n{str(model)}")
+            out = format_module_hierarchy("class", model)
+            logger.log(LOG_LEVEL_SUMMARY, f"\n{out}")
 
         # Note: the only means to obtain the module's "tensor" name (not class name)
         # is using the following method:
