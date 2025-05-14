@@ -1,5 +1,4 @@
 import sys
-import inspect
 from typing import Tuple, List
 import argparse
 import pathlib
@@ -13,6 +12,7 @@ LOG_LEVEL_INPUT = "INPUT"
 LOG_LEVEL_OUTPUT = "OUTPUT"
 LOG_LEVEL_PARAMS = "PARAMS"
 LOG_LEVEL_HIGHLIGHT = "HIGHLIGHT"
+LOG_LEVEL_ALERT = "ALERT"
 
 # Colors: https://htmlcolorcodes.com/
 # NOTE: Existing Loguru log levels: INFO=25, WARNING=30
@@ -21,6 +21,7 @@ logger.level(LOG_LEVEL_INPUT, no=27, color="<fg #87CEFA>")     # LightSkyBlue
 logger.level(LOG_LEVEL_OUTPUT, no=28, color="<fg #00BFFF>")    # DeepSkyBlue
 logger.level(LOG_LEVEL_PARAMS, no=28, color="<fg #4682B4>")    # SteelBlue
 logger.level(LOG_LEVEL_HIGHLIGHT, no=31, color="<fg #00FF00>") # Green
+logger.level(LOG_LEVEL_ALERT, no=29, color="<fg #f39c12>")     # (bright) orange
 logger.remove()
 logger.add(sys.stderr, level="INFO")
 
@@ -81,8 +82,14 @@ def print_torch_tensors(hook_name:str, level:str, module_name:str, module_class_
                     msg += f"[{level}] {module_name}:{module_class_name} ({hook_name}): {shape}:"
                 msg += f"\n[{i}]:{tensor}"
                 logger.log(level, f"{msg}")
+            elif type(tensor) is list: #  built-in
+                logger.log(LOG_LEVEL_ALERT, f"Unexpected module data type: {type(tensor)} expected 'torch.Tensor'")
+                logger.log(LOG_LEVEL_ALERT, f"Converting to a torch.Tensor type...")
+                # convert to tensor and output (recurse)
+                actualTensor = torch.tensor([tensor])
+                print_torch_tensors(hook_name, level, module_name, module_class_name, actualTensor, indent)
             else:
-                logger.warning(f"Unknown module data type: {type(tensor)} expected 'torch.Tensor'")
+                logger.log(LOG_LEVEL_ALERT, f"Unknown module data type: {type(tensor)} expected 'torch.Tensor'")
     else:
         logger.warning(f"\n[{level}] {module_name} ({hook_name}): No tensor data found.")
     return

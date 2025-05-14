@@ -58,7 +58,7 @@
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",
-            "args" : ["--model-path", "/Users/matt/Projects/huggingface/granite-4.0-tiny-preview", "--filter-name", "self_attn.q_proj"]
+            "args" : ["--model-path", "/Users/matt/Projects/huggingface/granite-4.0-tiny-preview"]
         },
         {
             "name": "Python Debugger: filter: module class name",
