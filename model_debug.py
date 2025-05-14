@@ -90,6 +90,8 @@ def print_torch_tensors(hook_name:str, level:str, module_name:str, module_class_
                 print_torch_tensors(hook_name, level, module_name, module_class_name, actualTensor, indent)
             else:
                 logger.log(LOG_LEVEL_ALERT, f"Unknown module data type: {type(tensor)} expected 'torch.Tensor'")
+                msg += f"\n[{i}]:{tensor}"
+                logger.log(LOG_LEVEL_ALERT, f"{msg}")
     else:
         logger.warning(f"\n[{level}] {module_name} ({hook_name}): No tensor data found.")
     return
