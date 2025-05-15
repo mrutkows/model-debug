@@ -10,6 +10,7 @@
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",
+            "justMyCode": false,
             "args" : ["--model-path", "/Users/matt/Projects/huggingface/granite-3.1-3b-a800m-instruct"]
         },
         {
@@ -18,6 +19,7 @@
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",
+            "justMyCode": false,
             "args" : ["--model-path", "/Users/matt/Projects/huggingface/granite-3.1-3b-a800m-instruct", "--filter-name", "self_attn.q_proj", "self_attn.k_proj", "--debug"]
         },
         {
@@ -26,6 +28,7 @@
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",
+            "justMyCode": false,
             "args" : ["--model-path", "/Users/matt/Projects/huggingface/granite-3.1-3b-a800m-instruct", "--filter-name", "layers.0.self_attn.k_proj", "--debug", "--pause"]
         },
         {
@@ -34,6 +37,7 @@
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",
+            "justMyCode": false,
             "args" : ["--model-path", "/Users/matt/Projects/huggingface/granite-3.1-3b-a800m-instruct", "--filter-name", "self_attn.k_proj"]
         },
         {
@@ -42,6 +46,7 @@
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",
+            "justMyCode": false,
             "args" : ["--model-path", "/Users/matt/Projects/huggingface/granite-3.1-3b-a800m-instruct", "--filter-name", "self_attn.q_proj", "self_attn.k_proj"]
         },
         {
@@ -63,12 +68,21 @@
             "args" : ["--model-path", "/Users/matt/Projects/huggingface/granite-4.0-tiny-preview"]
         },
         {
-            "name": "Python Debugger: filter: module class name",
+            "name": "Python Debugger: config test",
             "type": "debugpy",
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",
             "justMyCode": false,
+            "args" : ["--config-path", "/Users/matt/Projects/huggingface/granite-3.1-3b-a800m-instruct", "--prompt", "Write an executable hello world application using Golang.", "--filter-name", "self_attn.q_proj"]
+        },
+        {
+            "name": "Python Debugger: filter: module class name",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "justMyCode": true,
             "args" : ["--model-path", "/Users/matt/Projects/huggingface/granite-3.1-3b-a800m-instruct", "--filter-class", "Linear"]
         },
         {
@@ -77,17 +91,8 @@
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",
-            "justMyCode": false,
+            "justMyCode": true,
             "args" : ["--model-path", "/Users/matt/Projects/huggingface/granite-3.1-3b-a800m-instruct", "--prompt", "Write an executable hello world application using Golang.", "--filter-name", "self_attn.q_proj"]
-        },
-        {
-            "name": "Python Debugger: config test",
-            "type": "debugpy",
-            "request": "launch",
-            "program": "${file}",
-            "console": "integratedTerminal",
-            "justMyCode": false,
-            "args" : ["--config-path", "/Users/matt/Projects/huggingface/granite-3.1-3b-a800m-instruct", "--prompt", "Write an executable hello world application using Golang.", "--filter-name", "self_attn.q_proj"]
         },
         {
             "name": "Python Debugger: Current File; prompt arguments",
