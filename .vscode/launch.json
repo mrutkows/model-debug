@@ -95,7 +95,7 @@
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",
-            "justMyCode": false,
+            "justMyCode": true,
             "args": "${command:pickArgs}"
         }
     ]
