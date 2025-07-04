@@ -77,7 +77,7 @@ tokenizers==0.21.1
 torch==2.7.0
 tqdm==4.67.1
 traitlets==5.14.3
-transformers @ file:///Users/matt/Projects/huggingface/transformers
+transformers
 typer==0.15.4
 typing_extensions==4.12.2
 tzdata==2025.1
