@@ -143,7 +143,7 @@ def load_model(model_path: pathlib.Path, model_type: str):
     elif model_type == 'vision':
         return AutoModelForVision2Seq.from_pretrained(local_path, low_cpu_mem_usage=True)
     else:
-        raise ValueError(f"--model-path {model_path} does not exist")
+        raise ValueError(f"--model-type {model_type} does not exist")
 
 
 
