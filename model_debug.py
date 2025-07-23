@@ -4,7 +4,7 @@ import argparse
 import pathlib
 from loguru import logger
 import torch, torch.nn
-from transformers import AutoTokenizer, AutoConfig, AutoModel, AutoModelForCausalLM, PreTrainedModel
+from transformers import AutoTokenizer, AutoConfig, AutoModel, AutoModelForCausalLM, PreTrainedModel, AutoModelForVision2Seq
 from transformers.modeling_utils import ModuleUtilsMixin
 
 LOG_LEVEL_SUMMARY = "SUMMARY"
@@ -136,6 +136,17 @@ def filter_match(module_name:str, class_name:str, filter_class_name, filter_mode
                 return True
     return False
 
+def load_model(model_path: pathlib.Path, model_type: str):
+    
+    if model_type == 'text':
+        return AutoModelForCausalLM.from_pretrained(local_path, low_cpu_mem_usage=True)
+    elif model_type == 'vision':
+        return AutoModelForVision2Seq.from_pretrained(local_path, low_cpu_mem_usage=True)
+    else:
+        raise ValueError(f"--model-type {model_type} does not exist")
+
+
+
 if __name__ == "__main__":
     try:
         parser = argparse.ArgumentParser(description=__doc__, exit_on_error=False)
@@ -152,6 +163,7 @@ if __name__ == "__main__":
         parser.add_argument('--trace', default=False, action='store_true', help='Enable trace output')
         parser.add_argument('--pause', default=False, action='store_true', help='Pause between forward hooks')
         parser.add_argument('--truncate-threshold', default=10, type=int, help='truncate tensor value printout if > threshold')
+        parser.add_argument('--model-type', default='text', type=str, help='enter the model type, ex. vision, text')
         args = parser.parse_args()
 
         if args.verbose:
@@ -178,7 +190,8 @@ if __name__ == "__main__":
                 raise ValueError(f"--model-path {local_path} is not a model repo. (directory)")
 
             # load the model
-            model = AutoModelForCausalLM.from_pretrained(local_path, low_cpu_mem_usage=True)
+            model = load_model(local_path, args.model_type)
+
         elif args.config_path:
             local_path = str(args.config_path)
             if not args.config_path.exists():
